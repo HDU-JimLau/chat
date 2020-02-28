@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Java后端WebSocket的Tomcat实现</title>
+    <meta
+            content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'
+            name='viewport' />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+</head>
+<body>
+Welcome
+
+<br/>
+
+
+<button onclick="init()">连接websocket</button>
+<hr />
+请输入用户昵称：<input type="text" id="nickname"/>
+消息：<input id="messages" type="text" />
+频道号：<input id="toUser" type="text" />
+<button onclick="send()">发送消息</button>
+<hr />
+<button onclick="closeWebSocket()">关闭WebSocket连接</button>
+<hr />
+<div id="message"></div>
+</body>
+
+<script type="text/javascript">
+
+    var websocket = null;
+    var nickname
+    //判断当前浏览器是否支持WebSocket
+
+    alert("请输入昵称");
+    function getName() {
+        nickname = document.getElementById("nickname").value;
+        if(nickname===""){
+            alert("请输入昵称");
+            return;
+        }
+    }
+
+    function init() {
+        var name=getName();
+        var wsUrl = "ws://localhost:8080/myWs/"+nickname;
+        if ('WebSocket' in window) {
+            websocket = new WebSocket(wsUrl);
+            //CtbtDemo
+        } else {
+            alert('当前浏览器 Not support websocket')
+        }
+        //连接发生错误的回调方法
+        websocket.onerror = function() {
+            setMessageInnerHTML("WebSocket连接发生错误");
+        };
+
+        //连接成功建立的回调方法 isLL当1是按照经纬度进行查询，当0时是按照渔船进行查询（list为空的时候按照uId进行查询数据库，然后填充到list中去进行查询）
+        websocket.onopen = function() {
+            //websocket.send(JSON.stringify(message));
+        }
+
+        //接收到消息的回调方法
+        websocket.onmessage = function(event) {
+            setMessageInnerHTML(event.data);
+        }
+
+        //连接关闭的回调方法
+        websocket.onclose = function() {
+            /* 	if (evnt.code != 4500) {
+                    //4500为服务端在打开多tab时主动关闭返回的编码
+                    reconnect();//重连
+                } */
+            setMessageInnerHTML("WebSocket连接关闭");
+        }
+
+        //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
+        window.onbeforeunload = function() {
+            closeWebSocket();
+        }
+
+        //将消息显示在网页上
+        function setMessageInnerHTML(innerHTML) {
+            document.getElementById('message').innerHTML += innerHTML + '<br/>';
+        }
+
+
+
+
+
+
+    }
+    //发送消息
+    function send() {
+        var message = document.getElementById('messages').value;
+        var toUser = document.getElementById('toUser').value;
+        var socketMsg = {msg:message,toUser:toUser};
+        if(toUser == ''){
+            //群聊.
+            socketMsg.type = 0;
+        }else{
+            //单聊.
+            socketMsg.type = 1;
+        }
+        websocket.send(JSON.stringify(socketMsg));
+    }
+
+
+    //关闭WebSocket连接
+    function closeWebSocket() {
+        websocket.close();
+    }
+
+
+</script>
+</html>
